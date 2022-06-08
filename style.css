@@ -5,9 +5,14 @@ body{
     font-weight: bold;
     margin: 0px;
     overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    width: 100vw;
 }
 canvas {
-    /*cursor: none;*/
+    outline: solid white 1px;
 }
 #gui{
     font-size: 80px;

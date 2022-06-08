@@ -29,13 +29,17 @@ function gameOver (winner){
     running = false
 }
 
-const canvas = $('canvas')
-const c = canvas.getContext('2d')
-const width = window.innerWidth
-const height = window.innerHeight
-const fps = 60
-const speed = 5
-const playersWidth = 10
+let canvas = $('canvas')
+let c = canvas.getContext('2d')
+let width = 800
+let height = 600
+let fps = 60
+let playerSpeed = 7
+let playersWidth = 10
+let playerSize = 180
+let ballsize = 18
+let ballSpeed = 7
+
 let running = true
 
 canvas.width = width
@@ -62,14 +66,18 @@ canvas.addEventListener( 'mouseup', ()=>{
 
 class Player {
     
-    constructor( side, size) {
+    constructor(side) {
         
         this.side = side;
-        this.size = size != undefined ? size : 150;
+        this.size = playerSize;
         this.y = height/2 - this.size/2;
+        this.direction = 0
+        this.style = '#eef'
+        this.score = 0
+
 
         this.render = ()=>{
-            c.fillStyle = 'white';
+            c.fillStyle = this.style;
             if( this.side == 'right' ){
                 c.fillRect( 0, this.y, playersWidth, this.size);
             }
@@ -78,12 +86,12 @@ class Player {
             }
         }
 
-        this.move = (dir)=>{
-            if ( dir > 0 & this.y + this.size < height ){
-                this.y += speed
+        this.update = ()=>{
+            if ( this.direction > 0 & this.y + this.size < height ){
+                this.y += playerSpeed
             }
-            if ( dir < 0 & this.y > 0 ){
-                this.y -= speed
+            if ( this.direction < 0 & this.y > 0 ){
+                this.y -= playerSpeed
             }
         }
     }
@@ -97,23 +105,21 @@ class Ball {
             this.x = x;
             this.y = y;
     
-            this.vx = 12;
-            this.vy = 10;
+            this.vx = rdm(1)?ballSpeed:-ballSpeed;
+            this.vy = rdm(1)?ballSpeed:-ballSpeed;
     
             this.raduis = raduis;
     
+            this.style = '#eef'
+            
             this.render = ()=>{
-                c.fillStyle = 'white';
+                c.fillStyle = this.style;
                 c.beginPath();
                 c.arc(this.x, this.y, this.raduis, 0, 8, false);
                 c.fill();
             }
     
             this.update = ()=>{
-
-                this.x += this.vx
-                this.y += this.vy
-
                 if ( this.y + this.raduis > height ) {
                     this.vy *= -1
                     while ( this.y + this.raduis > height ){
@@ -126,22 +132,26 @@ class Ball {
                         this.y += 1
                     }
                 }
-                if ( this.x > width ){
+                if ( this.x + this.raduis + playersWidth > width ){
                     if( this.y > player2.y & this.y < player2.y + player2.size ){
                         this.vx *= -1
+                        if( player2.direction != 0 ){
+                            this.vy *= player2.direction
+                        }
+                        player2.score++
                     } else gameOver('player1')
-                    while ( this.x > width ){
-                        this.x -= 1
-                    }
                 }
-                if ( this.x < playersWidth ){
-                    if( this.y > player1.y & this.y < player1.y + player1.size ){
+                if ( this.x < this.raduis + playersWidth ){
+                    if( this.y + this.raduis > player1.y & this.y < player1.y + player1.size + this.raduis ){
                         this.vx *= -1
+                        if( player1.direction != 0 ){
+                            this.vy *= player1.direction
+                        }
+                        player1.score++
                     } else gameOver('player2')
-                    while ( this.x < 0 ){
-                        this.x += 1
-                    }
                 }
+                this.x += this.vx
+                this.y += this.vy
 
             }
         }
@@ -159,7 +169,11 @@ function loop(){
 
 //   --updates--
 
-    player1.move(input)
+    player1.direction = input
+    player2.direction = input
+
+    player1.update()
+    player2.update()
     ball.update()
 
 //   --rendering--
@@ -167,6 +181,8 @@ function loop(){
     player1.render()
     player2.render()
     ball.render()
+    c.fillText( player1.score, 10, 10)
+    c.fillText( player2.score, width-10, 10)
 
 }
 
@@ -177,7 +193,7 @@ let input = 0
 let player2 = new Player('left')
 
 
-let ball = new Ball( width/2, height/2, 20)
+let ball = new Ball( width/2, height/2, ballsize)
 
 window.addEventListener( 'keydown', (key)=>{
     if (key.key == 'w' ) input = -1
