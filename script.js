@@ -23,13 +23,20 @@ function $ (id){
 function randomColor (){
     return `hsl( ${rdm(360)}, ${random( 20, 70, true)}%, 50%)`
 }
+function gameOver (winner){
+    write( winner + ' wins')
+    $('gui').innerHTML = winner + ' wins'
+    running = false
+}
 
-let canvas = $('canvas')
-let c = canvas.getContext('2d')
-let width = window.innerWidth
-let height = window.innerHeight
-let fps = 60
-let speed = 5
+const canvas = $('canvas')
+const c = canvas.getContext('2d')
+const width = window.innerWidth
+const height = window.innerHeight
+const fps = 60
+const speed = 5
+const playersWidth = 10
+let running = true
 
 canvas.width = width
 canvas.height = height
@@ -58,16 +65,16 @@ class Player {
     constructor( side, size) {
         
         this.side = side;
-        this.size = size != undefined ? size : 200;
+        this.size = size != undefined ? size : 150;
         this.y = height/2 - this.size/2;
 
         this.render = ()=>{
             c.fillStyle = 'white';
-            if( side == 'right' ){
-                c.fillRect( 0, this.y, 10, this.size);
+            if( this.side == 'right' ){
+                c.fillRect( 0, this.y, playersWidth, this.size);
             }
-            if( side == 'left' ){
-                c.fillRect( width-10, this.y, width, this.size);
+            if( this.side == 'left' ){
+                c.fillRect( width - playersWidth, this.y, width, this.size);
             }
         }
 
@@ -90,21 +97,23 @@ class Ball {
             this.x = x;
             this.y = y;
     
-            this.vx = 10;
-            this.vy = 8;
+            this.vx = 12;
+            this.vy = 10;
     
             this.raduis = raduis;
     
             this.render = ()=>{
-                c.strokeStyle = 'white';
                 c.fillStyle = 'white';
                 c.beginPath();
                 c.arc(this.x, this.y, this.raduis, 0, 8, false);
                 c.fill();
-                c.stroke();
             }
     
             this.update = ()=>{
+
+                this.x += this.vx
+                this.y += this.vy
+
                 if ( this.y + this.raduis > height ) {
                     this.vy *= -1
                     while ( this.y + this.raduis > height ){
@@ -117,10 +126,23 @@ class Ball {
                         this.y += 1
                     }
                 }
+                if ( this.x > width ){
+                    if( this.y > player2.y & this.y < player2.y + player2.size ){
+                        this.vx *= -1
+                    } else gameOver('player1')
+                    while ( this.x > width ){
+                        this.x -= 1
+                    }
+                }
+                if ( this.x < playersWidth ){
+                    if( this.y > player1.y & this.y < player1.y + player1.size ){
+                        this.vx *= -1
+                    } else gameOver('player2')
+                    while ( this.x < 0 ){
+                        this.x += 1
+                    }
+                }
 
-
-                this.x += this.vx
-                this.y += this.vy
             }
         }
     }
@@ -131,7 +153,7 @@ function loop(){
 //     --loop--
 
     setTimeout(() => {
-        requestAnimationFrame(loop)
+        if ( running ) requestAnimationFrame(loop)
     }, 1000 / fps);
     c.clearRect( 0, 0, width, height)
 
@@ -164,6 +186,9 @@ window.addEventListener( 'keydown', (key)=>{
 window.addEventListener( 'keyup', (key)=>{
     if (key.key == 'w' & input == -1 ) input = 0
     if (key.key == 's' & input == 1 ) input = 0
+})
+window.addEventListener( 'keypress', (key)=>{
+    if (key.key == 'r') location.reload()
 })
 
 
