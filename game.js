@@ -29,21 +29,23 @@ function gameOver (winner){
     running = false
 }
 
-let canvas = $('canvas')
-let c = canvas.getContext('2d')
+let gameCanvas = $('gameCanvas')
+let c = gameCanvas.getContext('2d')
 let width = 800
 let height = 600
 let fps = 60
-let playerSpeed = 7
+let playerSpeed = 9
 let playersWidth = 10
 let playerSize = 180
 let ballsize = 18
 let ballSpeed = 7
+let maxBallSpeed = 13
+let friction = 5
 
 let running = true
 
-canvas.width = width
-canvas.height = height
+gameCanvas.width = width
+gameCanvas.height = height
 
 c.fillStyle = '#CCC'
 c.strokeStyle = '#CCC'
@@ -53,14 +55,14 @@ let mouse = {
     y: height/2,
     z: false
 }
-canvas.addEventListener( 'mousemove', ( event)=>{
+gameCanvas.addEventListener( 'mousemove', ( event)=>{
     mouse.x = event.x
     mouse.y = event.y
 })
-canvas.addEventListener( 'mousedown', ()=>{
+gameCanvas.addEventListener( 'mousedown', ()=>{
     mouse.z = true
 })
-canvas.addEventListener( 'mouseup', ()=>{
+gameCanvas.addEventListener( 'mouseup', ()=>{
     mouse.z = false
 })
 
@@ -113,9 +115,21 @@ class Ball {
             this.style = '#eef'
             
             this.render = ()=>{
-                c.fillStyle = this.style;
+                c.fillStyle = 'white'
                 c.beginPath();
-                c.arc(this.x, this.y, this.raduis, 0, 8, false);
+                c.arc(this.x, this.y, this.raduis, 0, 3.1415, false);
+                c.fill();
+                c.fillStyle = 'red'
+                c.beginPath();
+                c.arc(this.x, this.y, this.raduis, 3.1415, 6.283, false);
+                c.fill();
+                c.fillStyle = 'black'
+                c.beginPath();
+                c.arc(this.x, this.y, this.raduis/2, 0, 8, false);
+                c.fill();
+                c.fillStyle = 'white'
+                c.beginPath();
+                c.arc(this.x, this.y, this.raduis/2.5, 0, 8, false);
                 c.fill();
             }
     
@@ -136,7 +150,7 @@ class Ball {
                     if( this.y > player2.y & this.y < player2.y + player2.size ){
                         this.vx *= -1
                         if( player2.direction != 0 ){
-                            this.vy *= player2.direction
+                            this.vy += player2.direction * friction
                         }
                         player2.score++
                     } else gameOver('player1')
@@ -145,10 +159,16 @@ class Ball {
                     if( this.y + this.raduis > player1.y & this.y < player1.y + player1.size + this.raduis ){
                         this.vx *= -1
                         if( player1.direction != 0 ){
-                            this.vy *= player1.direction
+                            this.vy += player1.direction * friction
                         }
                         player1.score++
                     } else gameOver('player2')
+                }
+                while( this.vy > maxBallSpeed ){
+                    this.vy--
+                }
+                while( this.vy < -maxBallSpeed ){
+                    this.vy++
                 }
                 this.x += this.vx
                 this.y += this.vy
@@ -170,7 +190,7 @@ function loop(){
 //   --updates--
 
     player1.direction = input
-    player2.direction = input
+    player2.direction = input2
 
     player1.update()
     player2.update()
@@ -181,8 +201,10 @@ function loop(){
     player1.render()
     player2.render()
     ball.render()
+    c.fillStyle = 'white'
     c.fillText( player1.score, 10, 10)
-    c.fillText( player2.score, width-10, 10)
+    c.fillText( player2.score, width-15, 10)
+    for ( let i = 0 ; i < height / 10 ; i++ ) i % 2 ? c.fillRect( width/2-1, i*10-5, 2, 10) : 1;
 
 }
 
@@ -191,20 +213,29 @@ let player1 = new Player('right')
 let input = 0
 
 let player2 = new Player('left')
+let input2 = 0
 
 
 let ball = new Ball( width/2, height/2, ballsize)
 
+
+/*   // key board input
 window.addEventListener( 'keydown', (key)=>{
     if (key.key == 'w' ) input = -1
     if (key.key == 's' ) input = 1
+    if (key.key == '8' ) input2 = -1
+    if (key.key == '5' ) input2 = 1
 })
 window.addEventListener( 'keyup', (key)=>{
     if (key.key == 'w' & input == -1 ) input = 0
     if (key.key == 's' & input == 1 ) input = 0
+    if (key.key == '8' & input2 == -1 ) input2 = 0
+    if (key.key == '5' & input2 == 1 ) input2 = 0
 })
+*/
 window.addEventListener( 'keypress', (key)=>{
     if (key.key == 'r') location.reload()
+    if (!running) location.reload()
 })
 
 
