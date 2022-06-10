@@ -24,7 +24,7 @@ function randomColor (){
     return `hsl( ${rdm(360)}, ${random( 20, 70, true)}%, 50%)`
 }
 
-let gameCanvas = $('gameCanvas')
+let gameCanvas = $('canvas')
 let c = gameCanvas.getContext('2d')
 let width = window.innerWidth
 let height = window.innerHeight
@@ -68,10 +68,10 @@ class Player {
         }
 
         this.update = ( height, width)=>{
-            if ( this.direction > 0 & this.y + this.size < height ){
+            if ( this.direction == 1 & this.y + this.size < height ){
                 this.y += playerSpeed
             }
-            if ( this.direction < 0 & this.y > 0 ){
+            if ( this.direction == -1 & this.y > 0 ){
                 this.y -= playerSpeed
             }
         }
@@ -219,22 +219,23 @@ function loop(){
 
 //   --updates--
 
-    game.update()
-    game1.update()
-    game2.update()
+    games.forEach( game => {
+        game.update()
+    });
 
 //   --rendering--
 
-    game.render(c)
-    game1.render(c1)
-    game2.render(c2)
+    games[0].render(c)
 
 }
 
+let games = []
+for ( let i = 0 ; i < 5 ; i++ ) games.push( new Game( 600, 800))
+
+/*
 let game = new Game( 600, 800)
 let game1 = new Game( 600, ( window.innerWidth - 800 ) / 2 - 20)
 let game2 = new Game( 600, ( window.innerWidth - 800 ) / 2 - 20)
-
 
    // key board input 0 and 2
 window.addEventListener( 'keydown', (key)=>{
@@ -257,7 +258,7 @@ window.addEventListener( 'keyup', (key)=>{
     if (key.key == '5' & game2.input2 == 1 ) game2.input2 = 0
     if (key.key == '5' & game.input2 == 1 ) game.input2 = 0
 })
-
+*/
 
 window.addEventListener( 'keypress', (key)=>{
     if (key.key == 'r') location.reload()
