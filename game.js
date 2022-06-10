@@ -23,16 +23,11 @@ function $ (id){
 function randomColor (){
     return `hsl( ${rdm(360)}, ${random( 20, 70, true)}%, 50%)`
 }
-function gameOver (winner){
-    write( winner + ' wins')
-    $('gui').innerHTML = winner + ' wins'
-    running = false
-}
 
 let gameCanvas = $('gameCanvas')
 let c = gameCanvas.getContext('2d')
-let width = 800
-let height = 600
+let width = window.innerWidth
+let height = window.innerHeight
 let fps = 60
 let playerSpeed = 9
 let playersWidth = 10
@@ -44,31 +39,15 @@ let friction = 5
 
 let running = true
 
-gameCanvas.width = width
-gameCanvas.height = height
+gameCanvas.width = 800
+gameCanvas.height = 600
 
 c.fillStyle = '#CCC'
 c.strokeStyle = '#CCC'
 
-let mouse = {
-    x: width/2,
-    y: height/2,
-    z: false
-}
-gameCanvas.addEventListener( 'mousemove', ( event)=>{
-    mouse.x = event.x
-    mouse.y = event.y
-})
-gameCanvas.addEventListener( 'mousedown', ()=>{
-    mouse.z = true
-})
-gameCanvas.addEventListener( 'mouseup', ()=>{
-    mouse.z = false
-})
-
 class Player {
     
-    constructor(side) {
+    constructor(side, height, width) {
         
         this.side = side;
         this.size = playerSize;
@@ -78,17 +57,17 @@ class Player {
         this.score = 0
 
 
-        this.render = ()=>{
-            c.fillStyle = this.style;
+        this.render = (context, height, width)=>{
+            context.fillStyle = this.style;
             if( this.side == 'right' ){
-                c.fillRect( 0, this.y, playersWidth, this.size);
+                context.fillRect( 0, this.y, playersWidth, this.size);
             }
             if( this.side == 'left' ){
-                c.fillRect( width - playersWidth, this.y, width, this.size);
+                context.fillRect( width - playersWidth, this.y, this.size, this.size);
             }
         }
 
-        this.update = ()=>{
+        this.update = ( height, width)=>{
             if ( this.direction > 0 & this.y + this.size < height ){
                 this.y += playerSpeed
             }
@@ -99,9 +78,8 @@ class Player {
     }
 }
 
-
 class Ball {
-        
+
         constructor(x, y, raduis) {
             
             this.x = x;
@@ -114,26 +92,26 @@ class Ball {
     
             this.style = '#eef'
             
-            this.render = ()=>{
-                c.fillStyle = 'white'
-                c.beginPath();
-                c.arc(this.x, this.y, this.raduis, 0, 3.1415, false);
-                c.fill();
-                c.fillStyle = 'red'
-                c.beginPath();
-                c.arc(this.x, this.y, this.raduis, 3.1415, 6.283, false);
-                c.fill();
-                c.fillStyle = 'black'
-                c.beginPath();
-                c.arc(this.x, this.y, this.raduis/2, 0, 8, false);
-                c.fill();
-                c.fillStyle = 'white'
-                c.beginPath();
-                c.arc(this.x, this.y, this.raduis/2.5, 0, 8, false);
-                c.fill();
+            this.render = (context)=>{
+                context.fillStyle = 'white'
+                context.beginPath();
+                context.arc(this.x, this.y, this.raduis, 0, 3.1415, false);
+                context.fill();
+                context.fillStyle = 'red'
+                context.beginPath();
+                context.arc(this.x, this.y, this.raduis, 3.1415, 6.283, false);
+                context.fill();
+                context.fillStyle = 'black'
+                context.beginPath();
+                context.arc(this.x, this.y, this.raduis/2, 0, 8, false);
+                context.fill();
+                context.fillStyle = 'white'
+                context.beginPath();
+                context.arc(this.x, this.y, this.raduis/2.5, 0, 8, false);
+                context.fill();
             }
     
-            this.update = ()=>{
+            this.update = ( player1, player2, height, width)=>{
                 if ( this.y + this.raduis > height ) {
                     this.vy *= -1
                     while ( this.y + this.raduis > height ){
@@ -153,7 +131,10 @@ class Ball {
                             this.vy += player2.direction * friction
                         }
                         player2.score++
-                    } else gameOver('player1')
+                    } else {
+                        write('player1')
+                        return 'player1'
+                    }
                 }
                 if ( this.x < this.raduis + playersWidth ){
                     if( this.y + this.raduis > player1.y & this.y < player1.y + player1.size + this.raduis ){
@@ -162,7 +143,10 @@ class Ball {
                             this.vy += player1.direction * friction
                         }
                         player1.score++
-                    } else gameOver('player2')
+                    } else {
+                        write('player2')
+                        return 'player2'
+                    }
                 }
                 while( this.vy > maxBallSpeed ){
                     this.vy--
@@ -175,8 +159,49 @@ class Ball {
 
             }
         }
+}
+
+class Game{
+    constructor( height, width){
+
+        this.running = true
+        this.winner = null
+        
+        this.input1 = 0
+        this.input2 = 0
+
+        this.height = height
+        this.width = width
+
+        this.player1 = new Player( 'right', this.height, this.width)
+        this.player2 = new Player( 'left', this.height, this.width)
+        this.ball = new Ball( this.width/2, this.height/2, ballsize)
+        this.update = ()=>{
+            if(this.running){
+                this.player1.direction = this.input1
+                this.player2.direction = this.input2
+
+                this.player1.update( this.height, this.width)
+                this.player2.update( this.height, this.width)
+                
+                this.winner = this.ball.update( this.player1, this.player2, this.height, this.width)
+                this.running = !this.winner
+            } else {
+                return this.winner
+            }
+        }
+        this.render = (context)=>{
+            if(this.running){
+                context.clearRect( 0, 0, this.width, this.height)
+                this.player1.render(context, this.height, this.width)
+                this.player2.render(context, this.height, this.width)
+                this.ball.render(context, this.height, this.width)
+            }
+        }
     }
-    
+}
+
+let step = 0
 
 function loop(){
 
@@ -185,60 +210,56 @@ function loop(){
     setTimeout(() => {
         if ( running ) requestAnimationFrame(loop)
     }, 1000 / fps);
-    c.clearRect( 0, 0, width, height)
+    if( !running ){
+        setTimeout( ()=>{
+            location.reload()
+        }, 500)
+    }
+    step++
 
 //   --updates--
 
-    player1.direction = input
-    player2.direction = input2
-
-    player1.update()
-    player2.update()
-    ball.update()
+    game.update()
+    game1.update()
+    game2.update()
 
 //   --rendering--
 
-    player1.render()
-    player2.render()
-    ball.render()
-    c.fillStyle = 'white'
-    c.fillText( player1.score, 10, 10)
-    c.fillText( player2.score, width-15, 10)
-    for ( let i = 0 ; i < height / 10 ; i++ ) i % 2 ? c.fillRect( width/2-1, i*10-5, 2, 10) : 1;
+    game.render(c)
+    game1.render(c1)
+    game2.render(c2)
 
 }
 
-
-let player1 = new Player('right')
-let input = 0
-
-let player2 = new Player('left')
-let input2 = 0
+let game = new Game( 600, 800)
+let game1 = new Game( 600, ( window.innerWidth - 800 ) / 2 - 20)
+let game2 = new Game( 600, ( window.innerWidth - 800 ) / 2 - 20)
 
 
-let ball = new Ball( width/2, height/2, ballsize)
-
-
-/*   // key board input
+   // key board input 0 and 2
 window.addEventListener( 'keydown', (key)=>{
-    if (key.key == 'w' ) input = -1
-    if (key.key == 's' ) input = 1
-    if (key.key == '8' ) input2 = -1
-    if (key.key == '5' ) input2 = 1
+    if (key.key == 'w' ) game2.input1 = -1
+    if (key.key == 'w' ) game.input1 = -1
+    if (key.key == 's' ) game2.input1 = 1
+    if (key.key == 's' ) game.input1 = 1
+    if (key.key == '8' ) game2.input2 = -1
+    if (key.key == '8' ) game.input2 = -1
+    if (key.key == '5' ) game2.input2 = 1
+    if (key.key == '5' ) game.input2 = 1
 })
 window.addEventListener( 'keyup', (key)=>{
-    if (key.key == 'w' & input == -1 ) input = 0
-    if (key.key == 's' & input == 1 ) input = 0
-    if (key.key == '8' & input2 == -1 ) input2 = 0
-    if (key.key == '5' & input2 == 1 ) input2 = 0
+    if (key.key == 'w' & game2.input1 == -1 ) game2.input1 = 0
+    if (key.key == 'w' & game.input1 == -1 ) game.input1 = 0
+    if (key.key == 's' & game2.input1 == 1 ) game2.input1 = 0
+    if (key.key == 's' & game.input1 == 1 ) game.input1 = 0
+    if (key.key == '8' & game2.input2 == -1 ) game2.input2 = 0
+    if (key.key == '8' & game.input2 == -1 ) game.input2 = 0
+    if (key.key == '5' & game2.input2 == 1 ) game2.input2 = 0
+    if (key.key == '5' & game.input2 == 1 ) game.input2 = 0
 })
-*/
+
+
 window.addEventListener( 'keypress', (key)=>{
     if (key.key == 'r') location.reload()
     if (!running) location.reload()
 })
-
-
-
-
-loop()

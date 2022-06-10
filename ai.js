@@ -1,5 +1,5 @@
 
-let aiWidth = ( window.innerWidth - width ) / 2 - 50
+let aiWidth = ( window.innerWidth - 800 ) / 2 - 20
 let aiHeight = 600
 
 let aiCanvas1 = $('aiCanvas1')
@@ -13,23 +13,34 @@ aiCanvas2.height = aiHeight
 aiCanvas1.width = aiWidth
 aiCanvas2.width = aiWidth
 
+let NodeTypesList = [ 'input', 'calc', 'output']
+
+class Nodes{
+    constructor(type){
+        this.type = type
+        this.links = []
+    }
+}
+
+class Brain{
+    constructor(){
+        this.Nodes = []
+    }
+}
+
 function aiLoop(){
     
     // loop
 
     setTimeout( ()=>{
         requestAnimationFrame(aiLoop)
-    }, 1000/ 10)
-    
-    if( !running ){
-        setTimeout( ()=>{
-            location.reload()
-        }, 300)
-    }
+    }, 100)
 
-    //
+    // AI
 
+    input2 = random( -1, 1, 1) // AI :trollFace:
 
 }
 
+loop()
 aiLoop()
